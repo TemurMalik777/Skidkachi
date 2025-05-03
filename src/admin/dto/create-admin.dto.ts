@@ -3,5 +3,5 @@ export class CreateAdminDto {
   email: string;
   password: string;
   confirm_password: string;
-  is_creator: string;
+  is_creator: boolean;
 }

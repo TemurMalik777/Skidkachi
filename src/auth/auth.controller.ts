@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Req, Res } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import { Response, Request } from "express";
 import { SignInDto } from "./dto/sign-in.dto";
+import { CookieGetter } from "../common/cookie-getter.decorator";
 
 @Controller("auth")
 export class AuthController {
@@ -23,10 +24,21 @@ export class AuthController {
 
   @Get("sign-out")
   singout(
-    @Req() request: Request,
+    @CookieGetter("refresh_token") refreshToken: string,
+    // @Req() request: Request,
     @Res({ passthrough: true })
     res: Response
   ) {
-    return this.authService.signOut(request, res);
+    return this.authService.signOut(refreshToken, res); //requestni o'rniga refreshToken
+  }
+
+  @HttpCode(200)
+  @Post(":id/refresh")
+  refresh(
+    @Param("id", ParseIntPipe) id: number,
+    @CookieGetter("refresh_token") refreshToken: string,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    return this.authService.refreshToken(id, refreshToken, res);
   }
 }

@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   BadRequestException,
   Injectable,
+  NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -45,25 +46,58 @@ export class UsersService {
     return this.userModel.findOne({ where: { hashed_password } });
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(): Promise<User[]> {
+    const users = await this.userModel.findAll();
+    return users;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  // READ ONE (mavjud)
+  async findOne(id: number): Promise<User> {
+    const user = await this.userModel.findByPk(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
   }
 
-  findUserById(id: number) {
-    return this.userModel.findByPk(id)
+  // UPDATE
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.userModel.findByPk(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    await user.update(updateUserDto);
+    return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async remove(id: number): Promise<{ message: string }> {
+    const user = await this.userModel.findByPk(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    await user.destroy();
+    return { message: `User with ID ${id} deleted successfully` };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async updateRefreshToken(id: number, hashed_refresh_token: string) {
+    const updateUser = await this.userModel.update(
+      { hashed_refresh_token },
+      { where: { id } }
+    );
+    return updateUser;
   }
+
+  // async updateRefreshToken(userId: number, hashed_refresh_token: string) {
+  //   const user = await this.findUserById(userId);
+  //   if (!user) {
+  //     throw new NotFoundException("User not found");
+  //   }
+
+  //   user.hashed_refresh_token = hashed_refresh_token;
+  //   await user.save();
+  // }
 
   async activateUser(link: string) {
     if (!link) {

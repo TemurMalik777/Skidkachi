@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   Req,
   Res,
 } from "@nestjs/common";
@@ -82,44 +84,105 @@ export class AuthService {
     await user.save();
     res.status(200).send({
       message: "Tizimga xush keleibsiz",
-      accessToken,
+      refreshToken,
+      // accessToken,
     });
   }
 
-  async signOut(@Req() req: Request, @Res() res: Response) {
-    const refresh_token = req.cookies.refresh_token;
+  // async signOut(@Req() req: Request, @Res() res: Response) {
+  //   const refresh_token = req.cookies.refresh_token;
 
-    if (!refresh_token) {
-      throw new BadRequestException("Refresh token topilmadi");
-    }
+  //   if (!refresh_token) {
+  //     throw new BadRequestException("Refresh token topilmadi");
+  //   }
 
-    let payload: any;
-    try {
-      payload = this.jwtService.decode(refresh_token);
-    } catch (err) {
-      throw new BadRequestException("Token yaroqsiz yoki eskirgan");
+  //   let payload: any;
+  //   try {
+  //     payload = this.jwtService.decode(refresh_token);
+  //   } catch (err) {
+  //     throw new BadRequestException("Token yaroqsiz yoki eskirgan");
+  //   }
+  //   const user = await this.userService.findUserById(payload.id);
+  //   if (!user || !user.hashed_refresh_token) {
+  //     throw new BadRequestException(
+  //       "Foydalanuvchi topilmadi yoki tizimdan allaqachon chiqqan"
+  //     );
+  //   }
+  //   const isMatch = await bcrypt.compare(
+  //     refresh_token,
+  //     user.hashed_refresh_token
+  //   );
+  //   if (!isMatch) {
+  //     throw new BadRequestException("Token mos emas (hash xato)");
+  //   }
+
+  //   user.hashed_refresh_token = "";
+  //   await user.save();
+
+  //   res.clearCookie("refresh_token", {
+  //     httpOnly: true,
+  //   });
+
+  //   res.status(200).send({ message: "Foydalanuvchi tizimdan chiqdi" });
+  // }
+
+
+  async signOut(refreshToken: string, res: Response) {
+    const userData = await this.jwtService.verify(refreshToken, {
+      secret: process.env.REFRESH_TOKEN_KEY,
+    });
+    if (!userData) {
+      throw new ForbiddenException("user not verified");
     }
-    const user = await this.userService.findUserById(payload.id);
+    const hashed_refresh_token = "";
+    await this.userService.updateRefreshToken(
+      userData.id,
+      hashed_refresh_token
+    );
+
+    res.clearCookie("refresh_token");
+    const response = {
+      message: "user logged out successfully",
+    };
+    return response;
+  }
+
+  async refreshToken(userId: number, refresh_token: string, res: Response) {
+    const decodeToken = await this.jwtService.decode(refresh_token);
+    console.log(userId);
+    console.log(decodeToken["id"]);
+
+    if (userId !== decodeToken["id"]) {
+      throw new ForbiddenException("Ruxsat etilmagan");
+    }
+    const user = await this.userService.findOne(userId);
+
     if (!user || !user.hashed_refresh_token) {
-      throw new BadRequestException(
-        "Foydalanuvchi topilmadi yoki tizimdan allaqachon chiqqan"
-      );
+      throw new NotFoundException("user not found");
     }
-    const isMatch = await bcrypt.compare(
+
+    const tokenMatch = await bcrypt.compare(
       refresh_token,
       user.hashed_refresh_token
     );
-    if (!isMatch) {
-      throw new BadRequestException("Token mos emas (hash xato)");
+
+    if (!tokenMatch) {
+      throw new ForbiddenException("Forbidden");
     }
+    const { accessToken, refreshToken } = await this.generateTokens(user);
 
-    user.hashed_refresh_token = "";
-    await user.save();
+    const hashed_refresh_token = await bcrypt.hash(refreshToken, 7);
+    await this.userService.updateRefreshToken(user.id, hashed_refresh_token);
 
-    res.clearCookie("refresh_token", {
+    res.cookie("refresh_token", refreshToken, {
+      maxAge: Number(process.env.COOKIE_TIME),
       httpOnly: true,
     });
-
-    res.status(200).send({ message: "Foydalanuvchi tizimdan chiqdi" });
+    const response = {
+      message: "User refreshed",
+      userId: user.id,
+      access_token: accessToken,
+    };
+    return response;
   }
 }

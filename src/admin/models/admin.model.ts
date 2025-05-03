@@ -4,7 +4,7 @@ interface IAdminCreateAttr {
   full_name: string;
   email: string;
   hashed_password: string;
-  is_creator: string;
+  is_creator: boolean;
 }
 
 @Table({ tableName: "Admin" })
@@ -40,7 +40,8 @@ export class Admin extends Model<Admin, IAdminCreateAttr> {
   declare hashed_refresh_token: string;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.BOOLEAN,
+    defaultValue: false
   })
-  declare is_creator: string;
+  declare is_creator: boolean;
 }

@@ -44,6 +44,7 @@ export class User extends Model<User, IUsersCreateAttr> {
 
   @Column({
     type: DataType.STRING,
+    allowNull: true
   })
   declare hashed_refresh_token: string;
 
@@ -66,9 +67,7 @@ export class User extends Model<User, IUsersCreateAttr> {
 
   @Column({
     type: DataType.UUID,
-    defaultValue: DataType.UUIDV4()
+    defaultValue: DataType.UUIDV4(),
   })
   declare activation_link: string;
-
-
 }
