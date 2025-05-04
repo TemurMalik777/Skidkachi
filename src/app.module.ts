@@ -18,6 +18,11 @@ import { Status } from "./status/models/status.model";
 import { StoreModule } from "./store/store.module";
 import { Store } from "./store/models/store.model";
 import { District } from "./district/models/district.model";
+import { SocialMediaTypeModule } from './social_media_type/social_media_type.module';
+import { StoreSocialLinksModule } from './store_social_links/store_social_links.module';
+import { TypeModule } from './type/type.module';
+import { CategoryModule } from './category/category.module';
+import { DiscountsModule } from './discounts/discounts.module';
 
 @Module({
   imports: [
@@ -54,6 +59,11 @@ import { District } from "./district/models/district.model";
     DistrictModule,
     StatusModule,
     StoreModule,
+    SocialMediaTypeModule,
+    StoreSocialLinksModule,
+    TypeModule,
+    CategoryModule,
+    DiscountsModule,
   ],
   controllers: [],
   providers: [],
