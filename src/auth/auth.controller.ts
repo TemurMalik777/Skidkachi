@@ -3,7 +3,7 @@ import { AuthService } from "./auth.service";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import { Response, Request } from "express";
 import { SignInDto } from "./dto/sign-in.dto";
-import { CookieGetter } from "../common/cookie-getter.decorator";
+import { CookieGetter } from "../common/decorators/cookie-getter.decorator";
 
 @Controller("auth")
 export class AuthController {

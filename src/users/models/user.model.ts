@@ -1,4 +1,15 @@
-import { Column, DataType, Model, Table } from "sequelize-typescript";
+import {
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  DataType,
+  Model,
+  Table,
+} from "sequelize-typescript";
+import { Favourites } from "./favourites.model";
+import { Discount } from "../../discounts/models/discount.model";
+import { Store } from "../../store/models/store.model";
+import { StoreSubscribes } from "./store_subscribes.model";
 
 interface IUsersCreateAttr {
   name: string;
@@ -44,7 +55,7 @@ export class User extends Model<User, IUsersCreateAttr> {
 
   @Column({
     type: DataType.STRING,
-    allowNull: true
+    allowNull: true,
   })
   declare hashed_refresh_token: string;
 
@@ -70,4 +81,10 @@ export class User extends Model<User, IUsersCreateAttr> {
     defaultValue: DataType.UUIDV4(),
   })
   declare activation_link: string;
+
+  @BelongsToMany(() => Discount, () => Favourites)
+  discount: Discount[];
+
+  @BelongsToMany(()=>Store, ()=>StoreSubscribes )
+  store: Store[]
 }

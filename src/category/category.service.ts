@@ -1,26 +1,52 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/sequelize";
+import { Category } from "./models/category.model";
+import { CreateCategoryDto } from "./dto/create-category.dto";
+import { UpdateCategoryDto } from "./dto/update-category.dto";
 
 @Injectable()
 export class CategoryService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(
+    @InjectModel(Category)
+    private categoryModel: typeof Category
+  ) {}
+
+  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+    return await this.categoryModel.create(createCategoryDto);
   }
 
-  findAll() {
-    return `This action returns all category`;
+  async findAll(): Promise<Category[]> {
+    return await this.categoryModel.findAll({
+      include: [
+        { model: Category, as: "parent" },
+        { model: Category, as: "children" },
+      ],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
+  async findOne(id: number): Promise<Category> {
+    const category = await this.categoryModel.findByPk(id, {
+      include: [
+        { model: Category, as: "parent" },
+        { model: Category, as: "children" },
+      ],
+    });
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(
+    id: number,
+    updateCategoryDto: UpdateCategoryDto
+  ): Promise<Category> {
+    const category = await this.findOne(id);
+    return await category.update(updateCategoryDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: number): Promise<void> {
+    const category = await this.findOne(id);
+    await category.destroy();
   }
 }

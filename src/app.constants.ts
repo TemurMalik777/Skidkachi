@@ -1,4 +1,4 @@
 
 
 
-export const BOT_NAME = "Sikidkachi bot"
+export const BOT_NAME = "Skidkachi bot"

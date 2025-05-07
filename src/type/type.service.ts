@@ -1,26 +1,45 @@
-import { Injectable } from '@nestjs/common';
-import { CreateTypeDto } from './dto/create-type.dto';
-import { UpdateTypeDto } from './dto/update-type.dto';
+import { Injectable } from "@nestjs/common";
+import { InjectModel } from "@nestjs/sequelize";
+import { CreateTypeDto } from "./dto/create-type.dto";
+import { UpdateTypeDto } from "./dto/update-type.dto";
+import { Type } from "./models/type.model";
 
 @Injectable()
 export class TypeService {
-  create(createTypeDto: CreateTypeDto) {
-    return 'This action adds a new type';
+  constructor(@InjectModel(Type) private readonly typeModel: typeof Type) {}
+
+  async create(createTypeDto: CreateTypeDto) {
+    return await this.typeModel.create(createTypeDto);
   }
 
-  findAll() {
-    return `This action returns all type`;
+  async findAll() {
+    return await this.typeModel.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} type`;
+  async findOne(id: number) {
+    return await this.typeModel.findOne({ where: { id } });
   }
 
-  update(id: number, updateTypeDto: UpdateTypeDto) {
-    return `This action updates a #${id} type`;
+  async update(id: number, updateTypeDto: UpdateTypeDto) {
+    const [affectedCount, affectedRows] = await this.typeModel.update(
+      updateTypeDto,
+      {
+        where: { id },
+        returning: true,
+      }
+    );
+
+    return affectedCount > 0 ? affectedRows[0] : null;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} type`;
+  async remove(id: number) {
+    const type = await this.typeModel.findOne({ where: { id } });
+
+    if (type) {
+      await type.destroy();
+      return { message: `Type with ID ${id} has been deleted` };
+    }
+
+    return { message: `Type with ID ${id} not found` };
   }
 }
